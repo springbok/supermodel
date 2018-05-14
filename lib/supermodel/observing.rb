@@ -1,21 +1,47 @@
 module SuperModel
   module Observing
+    module Prepend
+
+      def create(*args, &block)
+        notify_observers(:before_create)
+        if result = super
+          notify_observers(:after_create)
+        end
+        result
+      end
+
+      def save(*args, &block)
+        notify_observers(:before_save)
+        if result = super
+          notify_observers(:after_save)
+        end
+        result
+      end
+
+      def update(*args, &block)
+        notify_observers(:before_update)
+        if result = super
+          notify_observers(:after_update)
+        end
+        result
+      end
+
+      def delete(*args, &block)
+        notify_observers(:before_delete)
+        if result = super
+          notify_observers(:after_delete)
+        end
+        result
+      end
+
+    end
+  end
+end
+
+module SuperModel
+  module Observing
     extend ActiveSupport::Concern
     include ActiveModel::Observing
-
-    included do
-      %w( create save update destroy ).each do |method|
-        class_eval(<<-EOS, __FILE__, __LINE__ + 1)
-          def #{method}_with_notifications(*args, &block)
-            notify_observers(:before_#{method})
-            if result = #{method}_without_notifications(*args, &block)
-              notify_observers(:after_#{method})
-            end
-            result
-          end
-        EOS
-        alias_method_chain(method, :notifications)
-      end
-    end
+    prepend SuperModel::Observing::Prepend
   end
 end
